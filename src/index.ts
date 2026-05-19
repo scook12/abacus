@@ -7,7 +7,7 @@ import { type Input, type Decision } from './engine'
 import { normalizePolicy } from './config/normalize'
 import type { NormalizedPolicy } from './config/schema'
 import { parseRawPolicyConfig } from './config/validate'
-import { evaluateWithOpaCli, toEngineDecision } from './policy/runtime'
+import { evaluateWithOpaWasm, toEngineDecision } from './policy/runtime'
 
 type Policy = NormalizedPolicy;
 
@@ -34,6 +34,6 @@ async function loadPolicy(): Promise<Policy> {
 /// 
 export default async function evaluate(t: Input): Promise<Decision> {
   const policy = await loadPolicy()
-  const decision = evaluateWithOpaCli(policy, t)
+  const decision = await evaluateWithOpaWasm(policy, t)
   return toEngineDecision(policy, decision)
 } 

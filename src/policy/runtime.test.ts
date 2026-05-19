@@ -5,6 +5,7 @@ import {
   buildRegoInput,
   extractActionParts,
   readRegoDecisionFromEvalOutput,
+  readRegoDecisionFromWasmResult,
   toEngineDecision,
   toRequestMatch,
 } from './runtime';
@@ -125,6 +126,23 @@ describe('policy runtime helpers', () => {
     const decision = readRegoDecisionFromEvalOutput(stdout);
     expect(decision.effect).toBe('ask');
     expect(decision.reason).toBe('human_review');
+  });
+
+  it('reads decision from opa wasm result set', () => {
+    const resultSet = [
+      {
+        result: {
+          effect: 'deny',
+          source: 'override_exact',
+          reason: 'blocked',
+          policy_version: 5,
+        },
+      },
+    ];
+
+    const decision = readRegoDecisionFromWasmResult(resultSet);
+    expect(decision.effect).toBe('deny');
+    expect(decision.reason).toBe('blocked');
   });
 
   it('maps rego decision to engine decision', () => {

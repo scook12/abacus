@@ -1,5 +1,8 @@
 import { execFileSync } from 'child_process';
+import { existsSync, mkdirSync, rmSync } from 'fs';
+import { readFile } from 'fs/promises';
 import { join } from 'path';
+import { loadPolicy as loadWasmPolicy, type LoadedPolicy } from '@open-policy-agent/opa-wasm';
 import type { Decision, Input } from '../engine';
 import type { NormalizedPolicy } from '../config/schema';
 
@@ -28,6 +31,65 @@ export type OpaCliOptions = {
   regoPath?: string;
   cwd?: string;
 };
+
+export type OpaWasmOptions = {
+  opaPath?: string;
+  regoPath?: string;
+  wasmPath?: string;
+  bundleDir?: string;
+  cwd?: string;
+  autoBuild?: boolean;
+};
+
+let cachedPolicyPath: string | undefined;
+let cachedPolicyPromise: Promise<LoadedPolicy> | undefined;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function ensurePolicyWasm(options: OpaWasmOptions = {}): string {
+  const cwd = options.cwd ?? process.cwd();
+  const bundleDir = options.bundleDir ?? join(cwd, 'src', 'policy', 'bundle');
+  const wasmPath = options.wasmPath ?? join(bundleDir, 'policy.wasm');
+
+  if (existsSync(wasmPath)) {
+    return wasmPath;
+  }
+
+  if (options.autoBuild === false) {
+    throw new Error(`Missing policy.wasm at ${wasmPath}. Run the policy build first.`);
+  }
+
+  const opaPath = options.opaPath ?? 'opa';
+  const regoPath = options.regoPath ?? join(cwd, 'src', 'policy', 'main.rego');
+  const tarPath = join(bundleDir, 'bundle.tar.gz');
+
+  mkdirSync(bundleDir, { recursive: true });
+  execFileSync(opaPath, ['build', '-t', 'wasm', '-e', 'abacus/decision', regoPath, '-o', tarPath], {
+    cwd,
+    encoding: 'utf8',
+  });
+  execFileSync('tar', ['-xzf', tarPath, '-C', bundleDir], { cwd, encoding: 'utf8' });
+  rmSync(tarPath, { force: true });
+  rmSync(join(bundleDir, 'data.json'), { force: true });
+  rmSync(join(bundleDir, '.manifest'), { force: true });
+  rmSync(join(bundleDir, 'src'), { recursive: true, force: true });
+
+  if (!existsSync(wasmPath)) {
+    throw new Error(`Failed to create policy.wasm at ${wasmPath}`);
+  }
+  return wasmPath;
+}
+
+async function getLoadedPolicy(options: OpaWasmOptions = {}): Promise<LoadedPolicy> {
+  const wasmPath = ensurePolicyWasm(options);
+  if (!cachedPolicyPromise || cachedPolicyPath !== wasmPath) {
+    cachedPolicyPath = wasmPath;
+    cachedPolicyPromise = readFile(wasmPath).then((bytes) => loadWasmPolicy(bytes));
+  }
+  return cachedPolicyPromise;
+}
 
 export function extractActionParts(action: Input['action']): { scope: string; verb: string } {
   const [scope, verb] = action.split('::');
@@ -117,6 +179,24 @@ export function readRegoDecisionFromEvalOutput(stdout: string): RegoDecision {
   return value as RegoDecision;
 }
 
+export function readRegoDecisionFromWasmResult(result: unknown): RegoDecision {
+  if (!Array.isArray(result) || result.length === 0) {
+    throw new Error('OPA Wasm returned no decision set');
+  }
+
+  const first = result[0];
+  if (!isRecord(first)) {
+    throw new Error('OPA Wasm returned invalid decision row');
+  }
+
+  const value = isRecord(first.result) ? first.result : first;
+  if (!isRecord(value) || typeof value.effect !== 'string' || typeof value.source !== 'string') {
+    throw new Error('OPA Wasm decision payload is missing effect/source');
+  }
+
+  return value as unknown as RegoDecision;
+}
+
 export function evaluateWithOpaCli(policy: NormalizedPolicy, input: Input, options: OpaCliOptions = {}): RegoDecision {
   const cwd = options.cwd ?? process.cwd();
   const regoPath = options.regoPath ?? join(cwd, 'src', 'policy', 'main.rego');
@@ -135,6 +215,16 @@ export function evaluateWithOpaCli(policy: NormalizedPolicy, input: Input, optio
   );
 
   return readRegoDecisionFromEvalOutput(stdout);
+}
+
+export async function evaluateWithOpaWasm(
+  policy: NormalizedPolicy,
+  input: Input,
+  options: OpaWasmOptions = {},
+): Promise<RegoDecision> {
+  const loaded = await getLoadedPolicy(options);
+  const result = loaded.evaluate(buildRegoInput(policy, input));
+  return readRegoDecisionFromWasmResult(result);
 }
 
 export function toEngineDecision(policy: NormalizedPolicy, decision: RegoDecision): Decision {
