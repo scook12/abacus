@@ -1,0 +1,80 @@
+[policy]
+schema_version = 1
+version = "matrix-2026-05"
+permission_mode = "relax"
+pattern_dialect = "glob"
+pattern_case = "insensitive"
+tool_match_mode = "tokenized_argv"
+
+[default.fs.read]
+"/workspace/*" = "allow"
+
+[default.fs.delete]
+"*" = "ask"
+
+[default.secret.use]
+"*" = "ask"
+
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "*"
+effect = "allow"
+reason = "allow_all_tools"
+
+[[overrides]]
+agent = "build"
+scope = "tool"
+verb = "use"
+tool = "*"
+effect = "ask"
+reason = "ask_build_tools"
+
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "webfetch"
+effect = "deny"
+reason = "block_webfetch"
+
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "bash"
+effect = "allow"
+reason = "allow_bash"
+
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "bash"
+effect = "deny"
+reason = "deny_bash"
+
+[[overrides]]
+scope = "net"
+verb = "get"
+scheme = "https"
+host = "*.example.com"
+path = "/api/*"
+port = "443"
+effect = "allow"
+reason = "allow_https_example_api"
+
+[[overrides]]
+scope = "net"
+verb = "*"
+scheme = "http"
+host = "*"
+path = "*"
+effect = "deny"
+reason = "https_only"
+
+[agents.build.fs.delete]
+"/workspace/tmp/*" = "allow"
+
+[agents.flow.secret.use]
+"git" = "allow"
+
+[agents.flow.skill.use]
+"research" = "allow"
