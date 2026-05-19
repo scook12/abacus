@@ -6,6 +6,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "test": "vitest run",
+    "test:integration": "vitest run src/*.integration.test.ts",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "test:rego": "opa test src/policy",
