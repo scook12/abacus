@@ -12,7 +12,8 @@ import {
 
 const samplePolicy: NormalizedPolicy = {
   meta: {
-    version: 1,
+    schemaVersion: 1,
+    policyVersion: 'v1',
     permissionMode: 'strict',
     patternDialect: 'glob',
     patternCase: 'insensitive',
@@ -157,6 +158,7 @@ describe('policy runtime helpers', () => {
       policyVersion: '3',
       effect: 'allow',
       reasons: ['allowed_rule'],
+      source: 'override_exact',
     });
   });
 });

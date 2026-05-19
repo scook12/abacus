@@ -4,7 +4,8 @@ import rego.v1
 
 base_config := {
   "meta": {
-    "version": 1,
+    "schemaVersion": 1,
+    "policyVersion": "v1",
     "permissionModeEffect": "deny",
   },
   "rules": [],
