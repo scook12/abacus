@@ -20,24 +20,24 @@ Core goal: produce auditable `allow | ask | deny` decisions for agent actions ac
 
 ## Architecture at a Glance
 
-- `src/engine.ts`
+- `packages/abacus/src/engine.ts`
   - Public input/output types (`Input`, `Decision`, `Action`)
   - Action typing is scope-aware (`net::use` is invalid by type)
 
-- `src/config/validate.ts`
+- `packages/abacus/src/config/validate.ts`
   - Zod front-door validation for TOML shape and key semantic checks
 
-- `src/config/normalize.ts`
+- `packages/abacus/src/config/normalize.ts`
   - Compiles validated config into normalized rule data with priority/specificity
 
-- `src/policy/*.rego`
+- `packages/abacus/src/policy/*.rego`
   - Rego policy modules and tests
-  - `src/policy/main.rego` is the decision entrypoint (`data.abacus.decision`)
+  - `packages/abacus/src/policy/main.rego` is the decision entrypoint (`data.abacus.decision`)
 
-- `src/policy/runtime.ts`
+- `packages/abacus/src/policy/runtime.ts`
   - Runtime adapter for OPA Wasm + request shaping + decision mapping
 
-- `src/index.ts`
+- `packages/abacus/src/index.ts`
   - Main evaluate function used by consumers
 
 ## Contract (Must Stay Stable Unless Intentionally Versioned)
@@ -83,7 +83,7 @@ Winner selection order:
 4. effect rank (`deny > ask > allow`)
 5. lexical `id`
 
-Source priority constants are defined in `src/config/schema.ts` (`SOURCE_PRIORITY`).
+Source priority constants are defined in `packages/abacus/src/config/schema.ts` (`SOURCE_PRIORITY`).
 
 ## Dev Guardrails
 
@@ -92,10 +92,10 @@ Source priority constants are defined in `src/config/schema.ts` (`SOURCE_PRIORIT
    - TS should validate, normalize, and call policy runtime.
 
 2. **Do not hand-edit generated Wasm artifacts.**
-   - `src/policy/bundle/policy.wasm` is generated.
+   - `packages/abacus/src/policy/bundle/policy.wasm` is generated.
 
 3. **If you change Rego modules, rebuild Wasm before integration tests.**
-   - `pnpm run build:policy:wasm`
+   - `pnpm --filter abacus run build:policy:wasm`
 
 4. **Keep schema and policy version distinction intact.**
    - Do not collapse `schema_version` and `version` semantics.
@@ -109,21 +109,21 @@ Source priority constants are defined in `src/config/schema.ts` (`SOURCE_PRIORIT
 ## Common Patterns
 
 - Add new scope-specific behavior by:
-  1. Implementing a scope candidate producer in `src/policy/<scope>.rego`
-  2. Aggregating it in `src/policy/main.rego`
-  3. Adding scope Rego tests (`src/policy/<scope>.test.rego`)
+  1. Implementing a scope candidate producer in `packages/abacus/src/policy/<scope>.rego`
+  2. Aggregating it in `packages/abacus/src/policy/main.rego`
+  3. Adding scope Rego tests (`packages/abacus/src/policy/<scope>.test.rego`)
   4. Adding integration TOML fixture + `*.integration.test.ts`
 
 - Add config semantics by:
-  1. Updating `src/config/validate.ts`
-  2. Updating `src/config/normalize.ts`
-  3. Updating/adding tests in `src/config/*.test.ts`
+  1. Updating `packages/abacus/src/config/validate.ts`
+  2. Updating `packages/abacus/src/config/normalize.ts`
+  3. Updating/adding tests in `packages/abacus/src/config/*.test.ts`
 
 - For integration behavior changes, prefer fixture-driven tests in:
-  - `src/index.integration.test.ts`
-  - `src/index.matrix.integration.test.ts`
-  - `src/index.conflicts.integration.test.ts`
-  - `src/index.argv.integration.test.ts`
+  - `packages/abacus/src/index.integration.test.ts`
+  - `packages/abacus/src/index.matrix.integration.test.ts`
+  - `packages/abacus/src/index.conflicts.integration.test.ts`
+  - `packages/abacus/src/index.argv.integration.test.ts`
 
 ## Anti-Patterns to Avoid
 
@@ -137,20 +137,22 @@ Source priority constants are defined in `src/config/schema.ts` (`SOURCE_PRIORIT
 ## Scripts and Commands
 
 - Unit/integration tests:
-  - `pnpm test`
-  - `pnpm test --coverage`
+  - `pnpm run test`
+  - `pnpm --filter abacus test --coverage`
 
 - Typecheck:
-  - `pnpm run typecheck`
+  - `pnpm run typecheck` (workspace)
+  - `pnpm --filter abacus run typecheck` (package)
 
 - Rego tests:
-  - `pnpm run test:rego`
+  - `pnpm run test:rego` (workspace)
+  - `pnpm --filter abacus run test:rego` (package)
 
 - Build policy Wasm bundle:
-  - `pnpm run build:policy:wasm`
+  - `pnpm --filter abacus run build:policy:wasm`
 
 - Full local verification (recommended before merge):
-  - `pnpm run build:policy:wasm && pnpm run test:rego && pnpm test && pnpm run typecheck`
+  - `pnpm run build && pnpm run test:rego && pnpm run test && pnpm run typecheck`
 
 ## Environment Notes
 
@@ -169,9 +171,9 @@ Config resolution order in runtime:
 
 If you touch any of these files:
 
-- `src/config/normalize.ts`
-- `src/config/validate.ts`
-- `src/policy/main.rego`
-- `src/policy/runtime.ts`
+- `packages/abacus/src/config/normalize.ts`
+- `packages/abacus/src/config/validate.ts`
+- `packages/abacus/src/policy/main.rego`
+- `packages/abacus/src/policy/runtime.ts`
 
 Then update tests at the same time and run the full verification command above.

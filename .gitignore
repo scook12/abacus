@@ -1,4 +1,7 @@
 node_modules/
+packages/*/node_modules/
 dist/
-src/policy/bundle/
+packages/*/dist/
+packages/*/src/policy/bundle/
 coverage/
+packages/*/coverage/

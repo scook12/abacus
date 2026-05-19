@@ -1,49 +1,21 @@
 {
-  "name": "abacus",
-  "version": "0.1.0",
-  "description": "Attribute-based access control runtime for agent actions",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.js"
-    },
-    "./package.json": "./package.json"
-  },
-  "files": [
-    "dist",
-    "README.md"
-  ],
-  "sideEffects": false,
-  "publishConfig": {
-    "access": "public"
-  },
-  "scripts": {
-    "build": "pnpm run build:policy:wasm && tsc --project tsconfig.build.json && node scripts/copy-policy-wasm.mjs",
-    "clean": "rm -rf dist",
-    "prepack": "pnpm run clean && pnpm run build",
-    "test": "vitest run --dir src",
-    "test:integration": "vitest run src/*.integration.test.ts",
-    "test:watch": "vitest --dir src",
-    "typecheck": "tsc --noEmit",
-    "test:rego": "opa test src/policy",
-    "build:policy:wasm": "mkdir -p src/policy/bundle && opa build -t wasm -e abacus/decision src/policy/main.rego src/policy/tool.rego src/policy/network.rego src/policy/filesystem.rego src/policy/secret.rego src/policy/skill.rego src/policy/escalate.rego -o src/policy/bundle/bundle.tar.gz && tar -xzf src/policy/bundle/bundle.tar.gz -C src/policy/bundle && rm src/policy/bundle/bundle.tar.gz && rm -f src/policy/bundle/data.json src/policy/bundle/.manifest && rm -rf src/policy/bundle/src"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
+  "name": "abacus-workspace",
+  "private": true,
   "packageManager": "pnpm@10.7.1",
-  "devDependencies": {
-    "@vitest/coverage-v8": "4.1.6",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.6"
+  "scripts": {
+    "build": "pnpm -r --if-present run build",
+    "clean": "pnpm -r --if-present run clean",
+    "test": "pnpm -r --if-present run test",
+    "test:integration": "pnpm -r --if-present run test:integration",
+    "test:rego": "pnpm -r --if-present run test:rego",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "changeset": "changeset",
+    "release:status": "changeset status",
+    "release:checklist": "node -e \"console.log('Follow docs/release-checklist.md')\"",
+    "release:version": "changeset version",
+    "release:publish": "changeset publish"
   },
-  "dependencies": {
-    "@open-policy-agent/opa-wasm": "^1.10.0",
-    "@types/node": "^25.9.0",
-    "smol-toml": "^1.6.1",
-    "zod": "^4.4.3"
+  "devDependencies": {
+    "@changesets/cli": "^2.29.6"
   }
 }
