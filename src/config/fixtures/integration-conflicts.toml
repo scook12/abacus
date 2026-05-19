@@ -1,0 +1,99 @@
+[policy]
+schema_version = 1
+version = "conflicts-2026-05"
+permission_mode = "strict"
+pattern_dialect = "glob"
+pattern_case = "insensitive"
+tool_match_mode = "tokenized_argv"
+
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "*"
+effect = "allow"
+reason = "global_allow_tools"
+
+[[overrides]]
+agent = "build"
+scope = "tool"
+verb = "use"
+tool = "*"
+effect = "ask"
+reason = "build_tools_ask"
+
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "deploy*"
+effect = "deny"
+reason = "deny_deploy_tools"
+
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "bash"
+effect = "allow"
+reason = "bash_allow"
+
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "bash"
+effect = "deny"
+reason = "bash_deny"
+
+[[overrides]]
+scope = "skill"
+verb = "*"
+pattern = "*"
+effect = "deny"
+reason = "deny_all_skills"
+
+[[overrides]]
+scope = "net"
+verb = "*"
+host = "*.corp.internal"
+path = "/api/*"
+effect = "allow"
+reason = "corp_api_allow"
+
+[[overrides]]
+scope = "net"
+verb = "get"
+scheme = "http"
+host = "*"
+path = "*"
+effect = "deny"
+reason = "no_http"
+
+[[overrides]]
+scope = "secret"
+verb = "use"
+pattern = "token"
+effect = "ask"
+reason = "secret_token_a"
+
+[[overrides]]
+scope = "secret"
+verb = "use"
+pattern = "token"
+effect = "ask"
+reason = "secret_token_b"
+
+[agents.build.tool]
+default = "allow"
+
+[[agents.build.tool.rules]]
+verb = "use"
+tool = "runner*"
+effect = "allow"
+reason = "build_runner_allow"
+
+[agents.flow.skill]
+default = "allow"
+
+[[agents.flow.skill.rules]]
+verb = "use"
+pattern = "research"
+effect = "allow"
+reason = "flow_skill_allow"
