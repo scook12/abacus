@@ -1,4 +1,4 @@
-# abacus
+# @ai-abacus/core
 
 An attribute-based access control runtime for agents.
 
@@ -28,7 +28,7 @@ Abacus aims to provide the configurable control plane for agents at these critic
 ## Install
 
 ```bash
-pnpm add abacus
+pnpm add @ai-abacus/core
 ```
 
 ## Library Usage
@@ -36,7 +36,7 @@ pnpm add abacus
 ### Evaluate with provided policy TOML
 
 ```ts
-import { evaluate } from 'abacus'
+import { evaluate } from '@ai-abacus/core'
 
 const decision = await evaluate(
   {
@@ -62,7 +62,7 @@ permission_mode = "strict"
 ### Create a reusable engine
 
 ```ts
-import { createEngine, parsePolicyToml } from 'abacus'
+import { createEngine, parsePolicyToml } from '@ai-abacus/core'
 
 const policy = parsePolicyToml(`
 [policy]

@@ -1,10 +1,10 @@
-# abacus workspace
+# ai-abacus workspace
 
 Monorepo for Abacus core runtime and plugin packages.
 
 ## Packages
 
-- `packages/abacus` - core ABAC policy runtime package published to npm as `abacus`
+- `packages/abacus` - core ABAC policy runtime package published to npm as `@ai-abacus/core`
 
 ## Common commands
 

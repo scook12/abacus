@@ -95,7 +95,7 @@ Source priority constants are defined in `packages/abacus/src/config/schema.ts` 
    - `packages/abacus/src/policy/bundle/policy.wasm` is generated.
 
 3. **If you change Rego modules, rebuild Wasm before integration tests.**
-   - `pnpm --filter abacus run build:policy:wasm`
+   - `pnpm --filter @ai-abacus/core run build:policy:wasm`
 
 4. **Keep schema and policy version distinction intact.**
    - Do not collapse `schema_version` and `version` semantics.
@@ -138,18 +138,18 @@ Source priority constants are defined in `packages/abacus/src/config/schema.ts` 
 
 - Unit/integration tests:
   - `pnpm run test`
-  - `pnpm --filter abacus test --coverage`
+  - `pnpm --filter @ai-abacus/core test --coverage`
 
 - Typecheck:
   - `pnpm run typecheck` (workspace)
-  - `pnpm --filter abacus run typecheck` (package)
+  - `pnpm --filter @ai-abacus/core run typecheck` (package)
 
 - Rego tests:
   - `pnpm run test:rego` (workspace)
-  - `pnpm --filter abacus run test:rego` (package)
+  - `pnpm --filter @ai-abacus/core run test:rego` (package)
 
 - Build policy Wasm bundle:
-  - `pnpm --filter abacus run build:policy:wasm`
+  - `pnpm --filter @ai-abacus/core run build:policy:wasm`
 
 - Full local verification (recommended before merge):
   - `pnpm run build && pnpm run test:rego && pnpm run test && pnpm run typecheck`

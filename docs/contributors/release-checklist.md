@@ -6,7 +6,7 @@ This checklist is for publishing workspace packages with Changesets.
 
 - Packages are versioned independently.
 - Only changed packages should be published.
-- `packages/abacus` is the current publishable runtime package.
+- `packages/abacus` is the current publishable runtime package (`@ai-abacus/core`).
 
 ## 1) Pre-release validation
 
@@ -21,7 +21,7 @@ Run from repo root:
 
 Optional package-level smoke test:
 
-- `pnpm --filter abacus pack`
+- `pnpm --filter @ai-abacus/core pack`
 
 ## 2) Create or verify changesets
 
@@ -46,5 +46,5 @@ Optional package-level smoke test:
 ## 5) Post-publish checks
 
 - Verify package install in a clean temp project.
-- Verify CJS and ESM import for `abacus`.
+- Verify CJS and ESM import for `@ai-abacus/core`.
 - Verify runtime evaluation path uses packaged Wasm without requiring `opa`.
