@@ -1,0 +1,77 @@
+[policy]
+schema_version = 1
+version = "argv-2026-05"
+permission_mode = "relax"
+pattern_dialect = "glob"
+pattern_case = "insensitive"
+tool_match_mode = "tokenized_argv"
+
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "*"
+effect = "allow"
+reason = "allow_any_tool"
+
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "bash"
+argv0 = "git"
+effect = "ask"
+reason = "review_git"
+
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "bash"
+argv0 = "git"
+argv = ["push", "--force"]
+effect = "deny"
+reason = "deny_force_push"
+
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "bash"
+argv0 = "git"
+argv = ["checkout"]
+effect = "allow"
+reason = "allow_checkout"
+
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "bash"
+argv0 = "git"
+argv = ["checkout"]
+effect = "deny"
+reason = "deny_checkout"
+
+[[overrides]]
+agent = "build"
+scope = "tool"
+verb = "use"
+tool = "bash"
+argv0 = "git"
+argv = ["status"]
+effect = "allow"
+reason = "build_allow_status"
+
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "bash"
+argv0 = "git"
+argv = ["status"]
+effect = "ask"
+reason = "ask_status"
+
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "bash"
+argv0 = "GIT"
+argv = ["VERSION"]
+effect = "allow"
+reason = "allow_version_case_insensitive"
