@@ -1,0 +1,131 @@
+[policy]
+version = 1
+
+# strict=deny, relax=ask, dangerous=allow
+permission_mode = "strict"
+
+# pattern behavior for all match fields
+pattern_dialect = "glob"
+pattern_case = "insensitive"
+
+# tool command matching is based on tokenized argv, not raw command strings.
+# - `argv0` is the executable token.
+# - `argv` is an ordered token subsequence match.
+tool_match_mode = "tokenized_argv"
+
+# resolution hierarchy:
+# 1) override exact
+# 2) override wildcard
+# 3) agent rule exact
+# 4) agent rule wildcard
+# 5) agent default
+# 6) global default
+# 7) permission_mode
+# tie-break: deny > ask > allow
+
+# global defaults (scope + verb + pattern -> effect)
+[default.fs.read]
+"*" = "allow"
+
+[default.fs.delete]
+"*" = "ask"
+
+[default.tool.use]
+"*" = "ask"
+
+[default.secret.use]
+"*" = "ask"
+
+[default.net]
+default = "ask"
+deny_methods = []
+
+# overrides are highest priority and apply to all agents unless `agent` is set.
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "webfetch"
+effect = "deny"
+reason = "block_webfetch_globally"
+
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "bash"
+argv0 = "rm"
+argv = ["-rf", "/*"]
+effect = "deny"
+reason = "block_rm_root"
+
+[[overrides]]
+scope = "net"
+verb = "*"
+scheme = "http"
+host = "*"
+path = "*"
+effect = "deny"
+reason = "https_only"
+
+[[overrides]]
+scope = "net"
+verb = "*"
+scheme = "ws"
+host = "*"
+path = "*"
+effect = "deny"
+reason = "wss_only"
+
+# build agent: fs/tool heavy, limited secret
+[agents.build.fs.use]
+"*" = "ask"
+
+[agents.build.fs.create]
+"*" = "allow"
+
+[agents.build.fs.delete]
+"*" = "allow"
+
+[agents.build.tool]
+default = "ask"
+
+[[agents.build.tool.rules]]
+verb = "use"
+tool = "bash"
+argv0 = "git"
+effect = "allow"
+
+[[agents.build.tool.rules]]
+verb = "use"
+tool = "bash"
+argv0 = "npm"
+effect = "allow"
+
+[[agents.build.tool.rules]]
+verb = "use"
+tool = "todo*"
+effect = "allow"
+
+[agents.build.secret.use]
+"*" = "ask"
+"git" = "allow"
+
+# research agent: readonly and network heavy
+[agents.research.net]
+default = "ask"
+deny_methods = ["post", "put", "patch", "delete"]
+
+[[agents.research.net.rules]]
+verb = "get"
+host = "*"
+path = "*"
+effect = "allow"
+
+# flow agent: tools/skills + limited secret
+[agents.flow.secret.use]
+"*" = "ask"
+
+[agents.flow.tool.use]
+"*" = "allow"
+
+[agents.flow.skill.use]
+"*" = "allow"
