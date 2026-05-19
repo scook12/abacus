@@ -35,6 +35,7 @@ export type OpaCliOptions = {
 export type OpaWasmOptions = {
   opaPath?: string;
   regoPath?: string;
+  regoPaths?: string[];
   wasmPath?: string;
   bundleDir?: string;
   cwd?: string;
@@ -62,11 +63,23 @@ function ensurePolicyWasm(options: OpaWasmOptions = {}): string {
   }
 
   const opaPath = options.opaPath ?? 'opa';
-  const regoPath = options.regoPath ?? join(cwd, 'src', 'policy', 'main.rego');
+  const regoSources =
+    options.regoPaths ??
+    (options.regoPath
+      ? [options.regoPath]
+      : [
+          join(cwd, 'src', 'policy', 'main.rego'),
+          join(cwd, 'src', 'policy', 'tool.rego'),
+          join(cwd, 'src', 'policy', 'network.rego'),
+          join(cwd, 'src', 'policy', 'filesystem.rego'),
+          join(cwd, 'src', 'policy', 'secret.rego'),
+          join(cwd, 'src', 'policy', 'skill.rego'),
+          join(cwd, 'src', 'policy', 'escalate.rego'),
+        ]);
   const tarPath = join(bundleDir, 'bundle.tar.gz');
 
   mkdirSync(bundleDir, { recursive: true });
-  execFileSync(opaPath, ['build', '-t', 'wasm', '-e', 'abacus/decision', regoPath, '-o', tarPath], {
+  execFileSync(opaPath, ['build', '-t', 'wasm', '-e', 'abacus/decision', ...regoSources, '-o', tarPath], {
     cwd,
     encoding: 'utf8',
   });
@@ -228,9 +241,12 @@ export async function evaluateWithOpaWasm(
 }
 
 export function toEngineDecision(policy: NormalizedPolicy, decision: RegoDecision): Decision {
+  const ruleId = decision.rule_id;
   return {
-    policyVersion: String(decision.policy_version ?? policy.meta.version),
+    policyVersion: String(decision.policy_version ?? policy.meta.policyVersion),
     effect: decision.effect,
     reasons: decision.reason ? [decision.reason] : [],
+    source: decision.source,
+    ...(ruleId !== undefined ? { ruleId } : {}),
   };
 }

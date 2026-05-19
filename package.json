@@ -9,7 +9,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "test:rego": "opa test src/policy",
-    "build:policy:wasm": "opa build -t wasm -e abacus/decision src/policy/main.rego -o src/policy/bundle/bundle.tar.gz && tar -xzf src/policy/bundle/bundle.tar.gz -C src/policy/bundle && rm src/policy/bundle/bundle.tar.gz && rm -f src/policy/bundle/data.json src/policy/bundle/.manifest && rm -rf src/policy/bundle/src"
+    "build:policy:wasm": "mkdir -p src/policy/bundle && opa build -t wasm -e abacus/decision src/policy/main.rego src/policy/tool.rego src/policy/network.rego src/policy/filesystem.rego src/policy/secret.rego src/policy/skill.rego src/policy/escalate.rego -o src/policy/bundle/bundle.tar.gz && tar -xzf src/policy/bundle/bundle.tar.gz -C src/policy/bundle && rm src/policy/bundle/bundle.tar.gz && rm -f src/policy/bundle/data.json src/policy/bundle/.manifest && rm -rf src/policy/bundle/src"
   },
   "keywords": [],
   "author": "",

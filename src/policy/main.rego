@@ -6,7 +6,7 @@ meta := object.get(object.get(input, "config", {}), "meta", {})
 
 permission_mode_effect := object.get(meta, "permissionModeEffect", "deny")
 
-policy_version := object.get(meta, "version", 1)
+policy_version := object.get(meta, "policyVersion", object.get(meta, "schemaVersion", 1))
 
 default decision := {
   "effect": "deny",
@@ -39,8 +39,34 @@ decision := {
 rules := object.get(object.get(input, "config", {}), "rules", [])
 
 candidates contains candidate if {
+  some candidate in data.abacus.tool.tool_candidates
+}
+
+candidates contains candidate if {
+  some candidate in data.abacus.network.network_candidates
+}
+
+candidates contains candidate if {
+  some candidate in data.abacus.filesystem.filesystem_candidates
+}
+
+candidates contains candidate if {
+  some candidate in data.abacus.secret.secret_candidates
+}
+
+candidates contains candidate if {
+  some candidate in data.abacus.skill.skill_candidates
+}
+
+candidates contains candidate if {
   some idx
   rule := rules[idx]
+  scope := object.get(rule, "scope", "")
+  scope != "tool"
+  scope != "net"
+  scope != "fs"
+  scope != "secret"
+  scope != "skill"
   rule_matches(rule)
   candidate := {
     "rule": rule,
@@ -136,7 +162,21 @@ field_matches(pattern, value) if {
 }
 
 glob_ci(pattern, value) if {
-  glob.match(lower(pattern), [], lower(value))
+  p := lower(pattern)
+  v := lower(value)
+  glob.match(p, [], v)
+}
+
+glob_ci(pattern, value) if {
+  p := lower(pattern)
+  v := lower(value)
+  glob.match(p, ["/"], v)
+}
+
+glob_ci(pattern, value) if {
+  p := lower(pattern)
+  v := lower(value)
+  glob.match(p, ["."], v)
 }
 
 argv_subsequence(rule_argv, request_argv) if {
