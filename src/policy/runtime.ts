@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, rmSync } from 'fs';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { normalize as normalizePath } from 'path';
+import { dirname } from 'path';
 import { loadPolicy as loadWasmPolicy, type LoadedPolicy } from '@open-policy-agent/opa-wasm';
 import type { Decision, Input } from '../engine';
 import type { NormalizedPolicy } from '../config/schema';
@@ -78,17 +79,23 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function hasLocalRegoSources(cwd: string): boolean {
+  return existsSync(join(cwd, 'src', 'policy', 'main.rego'));
+}
+
 function ensurePolicyWasm(options: OpaWasmOptions = {}): string {
   const cwd = options.cwd ?? process.cwd();
-  const bundleDir = options.bundleDir ?? join(cwd, 'src', 'policy', 'bundle');
-  const wasmPath = options.wasmPath ?? join(bundleDir, 'policy.wasm');
+  const defaultBundleDir = options.bundleDir ?? join(__dirname, 'bundle');
+  const wasmPath = options.wasmPath ?? join(defaultBundleDir, 'policy.wasm');
+  const bundleDir = dirname(wasmPath);
 
   if (existsSync(wasmPath)) {
     return wasmPath;
   }
 
-  if (options.autoBuild === false) {
-    throw new Error(`Missing policy.wasm at ${wasmPath}. Run the policy build first.`);
+  const autoBuild = options.autoBuild ?? hasLocalRegoSources(cwd);
+  if (!autoBuild) {
+    throw new Error(`Missing policy.wasm at ${wasmPath}. Provide wasmPath or run the policy build first.`);
   }
 
   const opaPath = options.opaPath ?? 'opa';

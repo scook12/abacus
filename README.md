@@ -6,7 +6,7 @@ An attribute-based access control runtime for agents.
 
 Abacus should provide:
 - a configurable rules-based engine for agent guardrails
-- auditable allow/escalate/deny decisions for evaluated actions
+- auditable allow/ask/deny decisions for evaluated actions
 - a fast and portable runtime
 
 ## Why
@@ -24,6 +24,83 @@ In each case, agents shouldn't be allowed to use them without oversight.
 Even in sandboxes, accessing secrets or executing code should safe and transparent.
 
 Abacus aims to provide the configurable control plane for agents at these critical access junctures.
+
+## Install
+
+```bash
+pnpm add abacus
+```
+
+## Library Usage
+
+### Evaluate with provided policy TOML
+
+```ts
+import { evaluate } from 'abacus'
+
+const decision = await evaluate(
+  {
+    requestId: 'req-1',
+    timestamp: new Date().toISOString(),
+    actor: { id: 'actor-1', permissions: {} },
+    action: 'tool::use',
+    context: { type: 'tool', id: 'ctx-1', tool: 'bash', argv0: 'git' },
+  },
+  {
+    configToml: `
+[policy]
+version = "2026-05"
+permission_mode = "strict"
+
+[default.tool.use]
+"*" = "allow"
+`,
+  },
+)
+```
+
+### Create a reusable engine
+
+```ts
+import { createEngine, parsePolicyToml } from 'abacus'
+
+const policy = parsePolicyToml(`
+[policy]
+version = "2026-05"
+
+[default.tool.use]
+"*" = "ask"
+`)
+
+const engine = await createEngine({ policy })
+const decision = await engine.evaluate({
+  requestId: 'req-2',
+  timestamp: new Date().toISOString(),
+  actor: { id: 'actor-1', permissions: {} },
+  action: 'tool::use',
+  context: { type: 'tool', id: 'ctx-2', tool: 'webfetch' },
+})
+```
+
+### Load policy via runtime config resolution
+
+Resolution order:
+
+1. explicit `configPath` option
+2. `ABACUS_CONFIG_PATH`
+3. local `./abacus.toml` (current working directory)
+4. `~/.config/abacus/abacus.toml`
+
+Use `loadPolicy` directly if you want only parse/normalize behavior.
+
+## Public API
+
+- `evaluate(input, options?)`
+- `createEngine(options?)`
+- `loadPolicy(options?)`
+- `parsePolicyToml(configToml)`
+- `parseRawPolicyConfig(raw)`
+- `normalizePolicy(raw)`
 
 ## Runtime Contract
 
@@ -117,3 +194,9 @@ Current source layer priorities are normalized in TS and consumed in Rego:
 - `agent_default` (500)
 - `global_default` (400)
 - `permission_mode` fallback
+
+## Packaging Notes
+
+- Runtime decisions execute against OPA Wasm (`@open-policy-agent/opa-wasm`).
+- Published package includes `dist/policy/bundle/policy.wasm`; consumers do not need `opa` installed.
+- `opa` and `tar` are required for maintainers when rebuilding policy Wasm before publishing.
