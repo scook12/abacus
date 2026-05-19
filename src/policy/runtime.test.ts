@@ -79,8 +79,45 @@ describe('policy runtime helpers', () => {
       host: 'docs.example.com',
       path: '/api/v1/items',
       scheme: 'https',
-      port: '',
+      port: '443',
     });
+  });
+
+  it('normalizes net host/path/scheme with explicit context fields', () => {
+    const input: Input<'net::get'> = {
+      ...baseInput,
+      action: 'net::get',
+      context: {
+        type: 'net',
+        id: 'ctx-net-explicit',
+        url: 'http://ignored.example/path',
+        host: 'DOCS.EXAMPLE.COM.',
+        path: 'api/v1/items',
+        scheme: 'HTTPS:',
+      },
+    };
+
+    expect(toRequestMatch(input)).toEqual({
+      pattern: 'http://ignored.example/path',
+      host: 'docs.example.com',
+      path: '/api/v1/items',
+      scheme: 'https',
+      port: '443',
+    });
+  });
+
+  it('normalizes filesystem path separators', () => {
+    const input: Input<'fs::read'> = {
+      ...baseInput,
+      action: 'fs::read',
+      context: {
+        type: 'fs',
+        id: 'ctx-fs',
+        path: 'folder/../folder/file.txt',
+      },
+    };
+
+    expect(toRequestMatch(input)).toEqual({ pattern: 'folder/file.txt' });
   });
 
   it('builds full rego input envelope', () => {

@@ -53,3 +53,42 @@ test_filesystem_candidates_match_fs_scope_only if {
   candidates := filesystem_candidates with input as req
   count(candidates) == 1
 }
+
+test_filesystem_candidates_require_matching_verb if {
+  config := {
+    "meta": {
+      "schemaVersion": 1,
+      "policyVersion": "filesystem-tests",
+      "permissionModeEffect": "deny",
+    },
+    "rules": [
+      {
+        "id": "fs-read",
+        "agent": "*",
+        "scope": "fs",
+        "verb": "read",
+        "effect": "allow",
+        "source": "global_default",
+        "priority": 400,
+        "specificity": 2,
+        "match": {
+          "pattern": "/workspace/*",
+        },
+      },
+    ],
+  }
+
+  req := {
+    "config": config,
+    "request": {
+      "scope": "fs",
+      "verb": "delete",
+      "match": {
+        "pattern": "/workspace/file.txt",
+      },
+    },
+  }
+
+  candidates := filesystem_candidates with input as req
+  count(candidates) == 0
+}
