@@ -1,0 +1,29 @@
+[policy]
+version = 7
+permission_mode = "relax"
+pattern_dialect = "glob"
+pattern_case = "insensitive"
+tool_match_mode = "tokenized_argv"
+
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "webfetch"
+effect = "deny"
+reason = "block_webfetch"
+
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "bash"
+argv0 = "git"
+effect = "allow"
+reason = "allow_git"
+
+[[overrides]]
+scope = "net"
+verb = "get"
+host = "*.example.com"
+path = "/api/*"
+effect = "allow"
+reason = "allow_example_api"
