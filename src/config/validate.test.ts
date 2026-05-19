@@ -36,4 +36,16 @@ describe('parseRawPolicyConfig', () => {
       }),
     ).toThrow(/deny_methods is only valid for net scope/);
   });
+
+  it('accepts schema_version and user policy version', () => {
+    const parsed = parseRawPolicyConfig({
+      policy: {
+        schema_version: 2,
+        version: 'user-policy-2026-05',
+      },
+    });
+
+    expect(parsed.policy?.schema_version).toBe(2);
+    expect(parsed.policy?.version).toBe('user-policy-2026-05');
+  });
 });

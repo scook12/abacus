@@ -50,7 +50,8 @@ export type NormalizedRule = {
 };
 
 export type NormalizedPolicyMeta = {
-  version: number;
+  schemaVersion: number;
+  policyVersion: string | number;
   permissionMode: PermissionMode;
   patternDialect: PatternDialect;
   patternCase: PatternCase;
@@ -65,7 +66,8 @@ export type NormalizedPolicy = {
 
 export type RawPolicyConfig = {
   policy?: {
-    version?: number;
+    schema_version?: number;
+    version?: string | number;
     permission_mode?: string;
     pattern_dialect?: string;
     pattern_case?: string;

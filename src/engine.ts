@@ -39,6 +39,8 @@ export type Decision = {
   policyVersion: string;
   effect: 'deny' | 'ask' | 'allow';
   reasons: string[];
+  source: string;
+  ruleId?: string;
 }
 
 export type Actor = {

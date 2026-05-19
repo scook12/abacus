@@ -53,9 +53,11 @@ testDescribe('evaluate integration (toml -> normalize -> wasm)', () => {
 
     const decision = await evaluate(input);
     expect(decision).toEqual({
-      policyVersion: '7',
+      policyVersion: '2026-05-integration',
       effect: 'deny',
       reasons: ['block_webfetch'],
+      source: 'override_exact',
+      ruleId: expect.any(String),
     });
   });
 
@@ -73,9 +75,11 @@ testDescribe('evaluate integration (toml -> normalize -> wasm)', () => {
 
     const decision = await evaluate(input);
     expect(decision).toEqual({
-      policyVersion: '7',
+      policyVersion: '2026-05-integration',
       effect: 'allow',
       reasons: ['allow_git'],
+      source: 'override_exact',
+      ruleId: expect.any(String),
     });
   });
 
@@ -92,9 +96,11 @@ testDescribe('evaluate integration (toml -> normalize -> wasm)', () => {
 
     const decision = await evaluate(input);
     expect(decision).toEqual({
-      policyVersion: '7',
+      policyVersion: '2026-05-integration',
       effect: 'allow',
       reasons: ['allow_example_api'],
+      source: 'override_exact',
+      ruleId: expect.any(String),
     });
   });
 
@@ -111,9 +117,11 @@ testDescribe('evaluate integration (toml -> normalize -> wasm)', () => {
 
     const decision = await evaluate(input);
     expect(decision).toEqual({
-      policyVersion: '7',
+      policyVersion: '2026-05-integration',
       effect: 'ask',
       reasons: ['permission_mode_default'],
+      source: 'permission_mode',
+      ruleId: '',
     });
   });
 });

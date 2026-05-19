@@ -37,7 +37,8 @@ const SCOPE_BLOCK_SCHEMA = z.object({
 }).catchall(VERB_PATTERN_MAP_SCHEMA);
 
 const POLICY_SCHEMA = z.object({
-  version: z.number().int().nonnegative().optional(),
+  schema_version: z.number().int().nonnegative().optional(),
+  version: z.union([z.string(), z.number()]).optional(),
   permission_mode: z.enum(['strict', 'relax', 'dangerous']).optional(),
   pattern_dialect: z.literal('glob').optional(),
   pattern_case: z.enum(['insensitive', 'sensitive']).optional(),

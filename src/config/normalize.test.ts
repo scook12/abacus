@@ -5,7 +5,8 @@ import type { RawPolicyConfig } from './schema';
 function sampleConfig(): RawPolicyConfig {
   return {
     policy: {
-      version: 1,
+      schema_version: 1,
+      version: 'policy-v1',
       permission_mode: 'strict',
       pattern_dialect: 'glob',
       pattern_case: 'insensitive',
@@ -53,11 +54,20 @@ describe('normalizePolicy', () => {
   it('computes meta defaults and permission-mode effect', () => {
     const normalized = normalizePolicy({ policy: { permission_mode: 'relax' } });
 
+    expect(normalized.meta.schemaVersion).toBe(1);
+    expect(normalized.meta.policyVersion).toBe(1);
     expect(normalized.meta.permissionMode).toBe('relax');
     expect(normalized.meta.permissionModeEffect).toBe('ask');
     expect(normalized.meta.patternDialect).toBe('glob');
     expect(normalized.meta.patternCase).toBe('insensitive');
     expect(normalized.meta.toolMatchMode).toBe('tokenized_argv');
+  });
+
+  it('preserves separate schema and policy versions', () => {
+    const normalized = normalizePolicy(sampleConfig());
+
+    expect(normalized.meta.schemaVersion).toBe(1);
+    expect(normalized.meta.policyVersion).toBe('policy-v1');
   });
 
   it('creates rules from defaults, overrides, and agents', () => {

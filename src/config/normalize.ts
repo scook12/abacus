@@ -374,7 +374,12 @@ function normalizeAgentSections(rules: NormalizedRule[], agents: Dict): void {
 
 export function normalizePolicy(rawConfig: RawPolicyConfig): NormalizedPolicy {
   const policy = assertRecord(rawConfig.policy ?? {}, 'policy');
-  const version = typeof policy.version === 'number' ? policy.version : 1;
+  const schemaVersion = typeof policy.schema_version === 'number' ? policy.schema_version : 1;
+  const policyVersionRaw = policy.version;
+  const policyVersion =
+    typeof policyVersionRaw === 'string' || typeof policyVersionRaw === 'number'
+      ? policyVersionRaw
+      : schemaVersion;
   const permissionMode = parsePermissionMode(policy.permission_mode);
 
   const patternDialect = (policy.pattern_dialect ?? 'glob') as string;
@@ -407,7 +412,8 @@ export function normalizePolicy(rawConfig: RawPolicyConfig): NormalizedPolicy {
 
   return {
     meta: {
-      version,
+      schemaVersion,
+      policyVersion,
       permissionMode,
       patternDialect: 'glob',
       patternCase: patternCase as 'insensitive' | 'sensitive',
