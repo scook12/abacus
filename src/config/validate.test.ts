@@ -23,6 +23,14 @@ describe('parseRawPolicyConfig', () => {
     ).toThrow(/Invalid verb 'use' for scope 'net'/);
   });
 
+  it('rejects unknown scope in overrides', () => {
+    expect(() =>
+      parseRawPolicyConfig({
+        overrides: [{ scope: 'nope', verb: '*', effect: 'deny' }],
+      }),
+    ).toThrow(/Unknown scope 'nope'/);
+  });
+
   it('rejects deny_methods on non-net scopes', () => {
     expect(() =>
       parseRawPolicyConfig({
@@ -35,6 +43,20 @@ describe('parseRawPolicyConfig', () => {
         },
       }),
     ).toThrow(/deny_methods is only valid for net scope/);
+  });
+
+  it('rejects unknown scope under agents', () => {
+    expect(() =>
+      parseRawPolicyConfig({
+        agents: {
+          flow: {
+            nope: {
+              default: 'deny',
+            },
+          },
+        },
+      }),
+    ).toThrow(/Unknown scope 'nope'/);
   });
 
   it('accepts schema_version and user policy version', () => {

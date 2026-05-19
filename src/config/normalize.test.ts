@@ -251,4 +251,69 @@ describe('normalizePolicy', () => {
     expect(firstRule?.source).toMatch(/^override_/);
     expect(firstRule?.effect).toBe('allow');
   });
+
+  it('throws for unsupported pattern dialect', () => {
+    expect(() =>
+      normalizePolicy({
+        policy: {
+          pattern_dialect: 'regex',
+        },
+      }),
+    ).toThrow(/Unsupported pattern_dialect/);
+  });
+
+  it('throws for unsupported pattern case', () => {
+    expect(() =>
+      normalizePolicy({
+        policy: {
+          pattern_case: 'mixed',
+        },
+      }),
+    ).toThrow(/Unsupported pattern_case/);
+  });
+
+  it('throws for unsupported tool match mode', () => {
+    expect(() =>
+      normalizePolicy({
+        policy: {
+          tool_match_mode: 'raw',
+        },
+      }),
+    ).toThrow(/Unsupported tool_match_mode/);
+  });
+
+  it('ignores unknown scope keys in defaults and agents', () => {
+    const normalized = normalizePolicy({
+      default: {
+        nope: {
+          read: {
+            '*': 'allow',
+          },
+        },
+      },
+      agents: {
+        flow: {
+          nope: {
+            default: 'allow',
+          },
+        },
+      },
+    });
+
+    expect(normalized.rules).toEqual([]);
+  });
+
+  it('throws when agents scope rules is not an array', () => {
+    expect(() =>
+      normalizePolicy({
+        agents: {
+          build: {
+            tool: {
+              rules: 'not-an-array' as unknown,
+            },
+          },
+        },
+      }),
+    ).toThrow(/Expected array at agents\.build\.tool\.rules/);
+  });
 });

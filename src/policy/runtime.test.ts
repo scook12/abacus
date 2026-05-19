@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import { execFileSync } from 'child_process';
 import type { Input } from '../engine';
 import type { NormalizedPolicy } from '../config/schema';
 import {
   buildRegoInput,
+  evaluateWithOpaCli,
+  evaluateWithOpaWasm,
   extractActionParts,
   readRegoDecisionFromEvalOutput,
   readRegoDecisionFromWasmResult,
@@ -31,6 +34,17 @@ const baseInput = {
     permissions: {},
   },
 };
+
+const hasOpa = (() => {
+  try {
+    execFileSync('opa', ['version'], { encoding: 'utf8' });
+    return true;
+  } catch {
+    return false;
+  }
+})();
+
+const itIfOpa = hasOpa ? it : it.skip;
 
 describe('policy runtime helpers', () => {
   it('extracts scope and verb from action', () => {
@@ -197,5 +211,78 @@ describe('policy runtime helpers', () => {
       reasons: ['allowed_rule'],
       source: 'override_exact',
     });
+  });
+
+  it('normalizes net scheme without default port for unknown protocol', () => {
+    const input: Input<'net::get'> = {
+      ...baseInput,
+      action: 'net::get',
+      context: {
+        type: 'net',
+        id: 'ctx-net-custom-scheme',
+        url: 'custom://host/path',
+      },
+    };
+
+    expect(toRequestMatch(input)).toEqual({
+      pattern: 'custom://host/path',
+      host: 'host',
+      path: '/path',
+      scheme: 'custom',
+      port: '',
+    });
+  });
+
+  it('throws when eval output has no decision value', () => {
+    expect(() => readRegoDecisionFromEvalOutput(JSON.stringify({ result: [] }))).toThrow(/no decision value/i);
+  });
+
+  it('throws when wasm result is invalid row', () => {
+    expect(() => readRegoDecisionFromWasmResult([42])).toThrow(/invalid decision row/i);
+  });
+
+  it('throws when wasm result payload misses effect/source', () => {
+    expect(() => readRegoDecisionFromWasmResult([{ result: { reason: 'x' } }])).toThrow(
+      /missing effect\/source/i,
+    );
+  });
+
+  itIfOpa('evaluateWithOpaCli works with explicit paths', () => {
+    const input: Input<'tool::use'> = {
+      ...baseInput,
+      action: 'tool::use',
+      context: {
+        type: 'tool',
+        id: 'ctx-cli',
+        tool: 'webfetch',
+      },
+    };
+
+    const decision = evaluateWithOpaCli(samplePolicy, input, {
+      regoPath: 'src/policy/main.rego',
+      cwd: process.cwd(),
+    });
+
+    expect(decision.effect).toBeDefined();
+    expect(decision.source).toBeDefined();
+  });
+
+  it('evaluateWithOpaWasm throws when auto-build disabled and wasm missing', async () => {
+    const input: Input<'tool::use'> = {
+      ...baseInput,
+      action: 'tool::use',
+      context: {
+        type: 'tool',
+        id: 'ctx-wasm',
+        tool: 'webfetch',
+      },
+    };
+
+    await expect(
+      evaluateWithOpaWasm(samplePolicy, input, {
+        wasmPath: '/tmp/definitely-not-here/policy.wasm',
+        autoBuild: false,
+      }),
+    ).rejects.toThrow(/Missing policy\.wasm/i);
   });
 });

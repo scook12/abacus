@@ -216,4 +216,51 @@ describe('resolveDecision / resolveRule', () => {
     expect(researchDeny.effect).toBe('deny');
     expect(researchDeny.source).toBe('permission_mode');
   });
+
+  it('does not match when required match field is missing', () => {
+    const policy = normalizePolicy({
+      policy: { permission_mode: 'strict' },
+      overrides: [
+        {
+          scope: 'net',
+          verb: 'get',
+          host: '*.example.com',
+          effect: 'allow',
+        },
+      ],
+    });
+
+    const decision = resolveDecision(policy, {
+      scope: 'net',
+      verb: 'get',
+      match: {},
+    });
+
+    expect(decision.effect).toBe('deny');
+    expect(decision.source).toBe('permission_mode');
+  });
+
+  it('returns permission_mode when agent-specific rule has no agent in request', () => {
+    const policy = normalizePolicy({
+      policy: { permission_mode: 'strict' },
+      overrides: [
+        {
+          agent: 'build',
+          scope: 'tool',
+          verb: 'use',
+          tool: 'bash',
+          effect: 'allow',
+        },
+      ],
+    });
+
+    const decision = resolveDecision(policy, {
+      scope: 'tool',
+      verb: 'use',
+      match: { tool: 'bash' },
+    });
+
+    expect(decision.effect).toBe('deny');
+    expect(decision.source).toBe('permission_mode');
+  });
 });
