@@ -2,6 +2,7 @@ import { execFileSync } from 'child_process';
 import { existsSync, mkdirSync, rmSync } from 'fs';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
+import { normalize as normalizePath } from 'path';
 import { loadPolicy as loadWasmPolicy, type LoadedPolicy } from '@open-policy-agent/opa-wasm';
 import type { Decision, Input } from '../engine';
 import type { NormalizedPolicy } from '../config/schema';
@@ -44,6 +45,34 @@ export type OpaWasmOptions = {
 
 let cachedPolicyPath: string | undefined;
 let cachedPolicyPromise: Promise<LoadedPolicy> | undefined;
+
+function defaultPortForScheme(scheme: string): string {
+  if (scheme === 'https' || scheme === 'wss') return '443';
+  if (scheme === 'http' || scheme === 'ws') return '80';
+  return '';
+}
+
+function normalizeScheme(scheme: string): string {
+  return scheme.trim().toLowerCase().replace(/:$/, '');
+}
+
+function normalizeHost(host: string): string {
+  return host.trim().toLowerCase().replace(/\.$/, '');
+}
+
+function normalizeUrlPath(path: string): string {
+  const raw = path.trim();
+  if (raw === '') return '/';
+  const withLeadingSlash = raw.startsWith('/') ? raw : `/${raw}`;
+  const normalized = normalizePath(withLeadingSlash).replace(/\\/g, '/');
+  return normalized === '' ? '/' : normalized;
+}
+
+function normalizeFsPath(path: string): string {
+  const raw = path.trim();
+  if (raw === '') return '';
+  return normalizePath(raw).replace(/\\/g, '/');
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -116,7 +145,7 @@ export function toRequestMatch(input: Input): Record<string, string | string[]> 
   const ctx = input.context as Input['context'] & Record<string, unknown>;
 
   if (ctx.type === 'fs') {
-    const path = String(ctx.path);
+    const path = normalizeFsPath(String(ctx.path));
     return { pattern: path };
   }
 
@@ -148,10 +177,14 @@ export function toRequestMatch(input: Input): Record<string, string | string[]> 
       parsed = undefined;
     }
 
-    const host = typeof ctx.host === 'string' ? ctx.host : parsed?.hostname ?? '';
-    const path = typeof ctx.path === 'string' ? ctx.path : parsed?.pathname ?? '';
-    const scheme = typeof ctx.scheme === 'string' ? ctx.scheme : parsed?.protocol.replace(':', '') ?? '';
-    const port = typeof ctx.port === 'string' ? ctx.port : parsed?.port ?? '';
+    const schemeRaw = typeof ctx.scheme === 'string' ? ctx.scheme : parsed?.protocol.replace(':', '') ?? '';
+    const scheme = normalizeScheme(schemeRaw);
+    const hostRaw = typeof ctx.host === 'string' ? ctx.host : parsed?.hostname ?? '';
+    const host = normalizeHost(hostRaw);
+    const pathRaw = typeof ctx.path === 'string' ? ctx.path : parsed?.pathname ?? '/';
+    const path = normalizeUrlPath(pathRaw);
+    const explicitPort = typeof ctx.port === 'string' ? ctx.port.trim() : parsed?.port ?? '';
+    const port = explicitPort === '' ? defaultPortForScheme(scheme) : explicitPort;
 
     return {
       pattern: fallbackUrl,
