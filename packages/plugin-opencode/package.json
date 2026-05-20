@@ -1,0 +1,45 @@
+{
+  "name": "@ai-abacus/plugin-opencode",
+  "version": "0.1.0",
+  "description": "OpenCode policy enforcement plugin powered by @ai-abacus/core",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "clean": "rm -rf dist",
+    "prepack": "pnpm run clean && pnpm run build",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "abac",
+    "policy",
+    "opencode",
+    "plugin"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@ai-abacus/core": "workspace:^0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.0",
+    "@opencode-ai/plugin": "^1.15.5",
+    "typescript": "^6.0.3"
+  }
+}

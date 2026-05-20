@@ -5,6 +5,7 @@ Monorepo for Abacus core runtime and plugin packages.
 ## Packages
 
 - `packages/abacus` - core ABAC policy runtime package published to npm as `@ai-abacus/core`
+- `packages/plugin-opencode` - OpenCode plugin package published to npm as `@ai-abacus/plugin-opencode`
 
 ## Common commands
 
