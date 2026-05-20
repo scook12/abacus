@@ -1,0 +1,203 @@
+[policy]
+schema_version = 1
+version = "local-opencode-test"
+permission_mode = "strict"
+pattern_dialect = "glob"
+pattern_case = "insensitive"
+tool_match_mode = "tokenized_argv"
+
+# Baseline behavior for unknown agents/actions.
+[default.tool.use]
+"*" = "ask"
+
+[default.skill.use]
+"*" = "ask"
+
+[default.fs.read]
+"*" = "allow"
+
+[default.fs.edit]
+"*" = "ask"
+
+[default.fs.create]
+"*" = "ask"
+
+[default.fs.delete]
+"*" = "deny"
+
+[default.net]
+default = "ask"
+deny_methods = ["post", "put", "patch", "delete"]
+
+# Safety overrides shared by all agents.
+[[overrides]]
+scope = "tool"
+verb = "use"
+tool = "bash"
+argv0 = "rm"
+argv = ["-rf", "/*"]
+effect = "deny"
+reason = "block_rm_root"
+
+[[overrides]]
+scope = "net"
+verb = "*"
+scheme = "http"
+host = "*"
+path = "*"
+effect = "deny"
+reason = "https_only"
+
+# build profile: productive with guardrails.
+[agents.build.fs.read]
+"*" = "allow"
+
+[agents.build.fs.edit]
+"*" = "allow"
+
+[agents.build.fs.create]
+"*" = "allow"
+
+[agents.build.fs.delete]
+"*" = "ask"
+
+[agents.build.skill.use]
+"*" = "allow"
+
+[agents.build.net]
+default = "ask"
+deny_methods = ["post", "put", "patch", "delete"]
+
+[[agents.build.net.rules]]
+verb = "get"
+host = "*"
+path = "*"
+effect = "allow"
+
+[agents.build.tool]
+default = "ask"
+
+[[agents.build.tool.rules]]
+verb = "use"
+tool = "read"
+effect = "allow"
+
+[[agents.build.tool.rules]]
+verb = "use"
+tool = "edit"
+effect = "allow"
+
+[[agents.build.tool.rules]]
+verb = "use"
+tool = "write"
+effect = "allow"
+
+[[agents.build.tool.rules]]
+verb = "use"
+tool = "glob"
+effect = "allow"
+
+[[agents.build.tool.rules]]
+verb = "use"
+tool = "grep"
+effect = "allow"
+
+[[agents.build.tool.rules]]
+verb = "use"
+tool = "apply_patch"
+effect = "allow"
+
+[[agents.build.tool.rules]]
+verb = "use"
+tool = "bash"
+argv0 = "git"
+effect = "allow"
+
+[[agents.build.tool.rules]]
+verb = "use"
+tool = "bash"
+argv0 = "pnpm"
+effect = "allow"
+
+[[agents.build.tool.rules]]
+verb = "use"
+tool = "bash"
+argv0 = "curl"
+effect = "deny"
+
+[[agents.build.tool.rules]]
+verb = "use"
+tool = "bash"
+argv0 = "wget"
+effect = "deny"
+
+
+[[agents.build.tool.rules]]
+verb = "use"
+tool = "bash"
+argv0 = "node"
+effect = "allow"
+
+# explore profile: mostly read + fetch.
+[agents.explore.fs.read]
+"*" = "allow"
+
+[agents.explore.fs.edit]
+"*" = "deny"
+
+[agents.explore.fs.create]
+"*" = "deny"
+
+[agents.explore.fs.delete]
+"*" = "deny"
+
+[agents.explore.skill.use]
+"*" = "allow"
+
+[agents.explore.net]
+default = "ask"
+deny_methods = ["post", "put", "patch", "delete"]
+
+[[agents.explore.net.rules]]
+verb = "get"
+host = "*"
+path = "*"
+effect = "allow"
+
+[agents.explore.tool]
+default = "ask"
+
+[[agents.explore.tool.rules]]
+verb = "use"
+tool = "read"
+effect = "allow"
+
+[[agents.explore.tool.rules]]
+verb = "use"
+tool = "glob"
+effect = "allow"
+
+[[agents.explore.tool.rules]]
+verb = "use"
+tool = "grep"
+effect = "allow"
+
+[[agents.explore.tool.rules]]
+verb = "use"
+tool = "webfetch"
+effect = "allow"
+
+[[agents.explore.tool.rules]]
+verb = "use"
+tool = "edit"
+effect = "deny"
+
+[[agents.explore.tool.rules]]
+verb = "use"
+tool = "write"
+effect = "deny"
+
+[[agents.explore.tool.rules]]
+verb = "use"
+tool = "apply_patch"
+effect = "deny"
